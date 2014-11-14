@@ -274,7 +274,7 @@ class GPRMC(object):
         return gprmc
 
 if __name__ == "__main__":
-    
+    '''
     # Test koordinaten UNI Bern in WGS84 
     # Sexagesimal: Länge 7° 26' 22.50" / Breite 46° 57' 08.66"
     # Decimal: Länge 7.438808 / Breite 46.951286
@@ -290,23 +290,30 @@ if __name__ == "__main__":
     lv03 = converter.WGS84toLV03(testlat, testlng, 0)
     
     print lv03
-    
     '''
+    converter = GPSConverter()
+    
     try:
 	Testfile="/home/aaron/GPS_ZUGKRAFTMESSUNG/20140910_Guellen/GPS_Guellen.txt"
 	sentences = csv.reader(open(Testfile, 'r'))
 	
 	# for each line in the file
-	for line in sentences:
+	for j, line in enumerate(sentences):
 		# if the line isn't empty and begins with '$GPRMC' 
     		if line and line[0].strip() == '$GPRMC':
-        		for word in line:
-        			print word
-        		print "_____________________"
-            
+        		print "__________________________\n"
+        		print "[Element: %d]" % j
+        		for i, word in enumerate(line):
+        			#print "[%d]" % i + word
+        			if i == 3:
+        			    tmp = float(word)
+        			    tmp = tmp / 100
+        			    print "lat: %f" % tmp
+        			if i == 5:
+        			    tmp = float(word)
+        			    tmp = tmp / 100
+        			    print "lon: %f" % tmp
     except Exception as e:
         print e
     finally:
         print "[DEBUG]: Cleanup done, exiting."
-    '''
-
