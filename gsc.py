@@ -1,8 +1,174 @@
 #!/usr/bin/python2
+#-*- coding: utf-8 -*-
 #
 # The gsp speed calculator [gsc.py] uses the csv reader to fix nmea strings
 #
 import csv
+import math
+
+class GPSConverter(object):
+    '''
+    GPS Converter class which is able to perform convertions between the 
+    CH1903 and WGS84 system.
+    '''
+    # Convert CH y/x/h to WGS height
+    def CHtoWGSheight(self, y, x, h):
+        # Converts militar to civil and to unit = 1000km
+        # Axiliary values (% Bern)
+        y_aux = (y - 600000) / 1000000
+        x_aux = (x - 200000) / 1000000
+        # Process height
+        h = (h + 49.55) - (12.60 * y_aux) - (22.64 * x_aux)
+        return h
+
+    # Convert CH y/x to WGS lat
+    def CHtoWGSlat(self, y, x):
+        # Converts militar to civil and to unit = 1000km
+        # Axiliary values (% Bern)
+        y_aux = (y - 600000) / 1000000
+        x_aux = (x - 200000) / 1000000
+        # Process lat
+        lat = (16.9023892 + (3.238272 * x_aux)) + \
+                - (0.270978 * pow(y_aux, 2)) + \
+                - (0.002528 * pow(x_aux, 2)) + \
+                - (0.0447 * pow(y_aux, 2) * x_aux) + \
+                - (0.0140 * pow(x_aux, 3))
+        # Unit 10000" to 1 " and converts seconds to degrees (dec)
+        lat = (lat * 100) / 36
+        return lat
+
+    # Convert CH y/x to WGS long
+    def CHtoWGSlng(self, y, x):
+        # Converts militar to civil and to unit = 1000km
+        # Axiliary values (% Bern)
+        y_aux = (y - 600000) / 1000000
+        x_aux = (x - 200000) / 1000000
+        # Process long
+        lng = (2.6779094 + (4.728982 * y_aux) + \
+                + (0.791484 * y_aux * x_aux) + \
+                + (0.1306 * y_aux * pow(x_aux, 2))) + \
+                - (0.0436 * pow(y_aux, 3))
+        # Unit 10000" to 1 " and converts seconds to degrees (dec)
+        lng = (lng * 100) / 36
+        return lng
+
+    # Convert decimal angle (degrees) to sexagesimal angle (degrees, minutes
+    # and seconds dd.mmss,ss)
+    def DecToSexAngle(self, dec):
+        degree = int(math.floor(dec))
+        minute = int(math.floor((dec - degree) * 60))
+        second = (((dec - degree) * 60) - minute) * 60
+        # Output: dd.mmss(,)ss
+        return degree + (float(minute) / 100) + (second / 10000)
+		
+    # Convert sexagesimal angle (degrees, minutes and seconds dd.mmss,ss) to seconds
+    def SexAngleToSeconds(self, dms):
+        degree = 0 
+        minute = 0 
+        second = 0
+        degree = math.floor(dms)
+        minute = math.floor((dms - degree) * 100)
+        second = (((dms - degree) * 100) - minute) * 100
+        # Result in degrees sex (dd.mmss)
+        return second + (minute * 60) + (degree * 3600)
+
+    # Convert sexagesimal angle (degrees, minutes and seconds "dd.mmss") to decimal angle (degrees)
+    def SexToDecAngle(self, dms):
+        # Extract DMS
+        # Input: dd.mmss(,)ss
+        degree = 0
+        minute = 0
+        second = 0
+        degree = math.floor(dms)
+        minute = math.floor((dms - degree) * 100)
+        second = (((dms - degree) * 100) - minute) * 100
+        # Result in degrees dec (dd.dddd)
+        return degree + (minute / 60) + (second / 3600)
+    
+    # Convert WGS lat/long (° dec) and height to CH h
+    def WGStoCHh(self, lat, lng, h):
+        # Converts degrees dec to sex
+        lat = self.DecToSexAngle(lat)
+        lng = self.DecToSexAngle(lng)
+        # Converts degrees to seconds (sex)
+        lat = self.SexAngleToSeconds(lat)
+        lng = self.SexAngleToSeconds(lng)
+        # Axiliary values (% Bern)
+        lat_aux = (lat - 169028.66) / 10000
+        lng_aux = (lng - 26782.5) / 10000
+        # Process h
+        h = (h - 49.55) + (2.73 * lng_aux) + (6.94 * lat_aux)
+        return h
+
+    # Convert WGS lat/long (° dec) to CH x
+    def WGStoCHx(self, lat, lng):
+        # Converts degrees dec to sex
+        lat = self.DecToSexAngle(lat)
+        lng = self.DecToSexAngle(lng)
+        # Converts degrees to seconds (sex)
+        lat = self.SexAngleToSeconds(lat)
+        lng = self.SexAngleToSeconds(lng)
+        # Axiliary values (% Bern)
+        lat_aux = (lat - 169028.66) / 10000
+        lng_aux = (lng - 26782.5) / 10000
+        # Process X
+        x = ((200147.07 + (308807.95 * lat_aux) + \
+            + (3745.25 * pow(lng_aux, 2)) + \
+            + (76.63 * pow(lat_aux,2))) + \
+            - (194.56 * pow(lng_aux, 2) * lat_aux)) + \
+            + (119.79 * pow(lat_aux, 3))
+        return x
+
+	# Convert WGS lat/long (° dec) to CH y
+    def WGStoCHy(self, lat, lng):
+        # Converts degrees dec to sex
+        lat = self.DecToSexAngle(lat)
+        lng = self.DecToSexAngle(lng)
+        # Converts degrees to seconds (sex)
+        lat = self.SexAngleToSeconds(lat)
+        lng = self.SexAngleToSeconds(lng)
+        # Axiliary values (% Bern)
+        lat_aux = (lat - 169028.66) / 10000
+        lng_aux = (lng - 26782.5) / 10000
+        # Process Y
+        y = (600072.37 + (211455.93 * lng_aux)) + \
+            - (10938.51 * lng_aux * lat_aux) + \
+            - (0.36 * lng_aux * pow(lat_aux, 2)) + \
+            - (44.54 * pow(lng_aux, 3))
+        return y
+
+    '''
+    * Convert LV03 to WGS84 Return a array of double that contain lat, long,
+    * and height
+    * 
+    * @param east
+    * @param north
+    * @param height
+    * @return
+    '''
+    def LV03toWGS84(self, east, north, height):
+        d = [0,0,0]
+        d[0] = self.CHtoWGSlat(east, north)
+        d[1] = self.CHtoWGSlng(east, north)
+        d[2] = self.CHtoWGSheight(east, north, height)
+        return d
+        
+    '''
+    * Convert WGS84 to LV03 Return an array of double that contaign east,
+    * north, and height
+    * 
+    * @param latitude
+    * @param longitude
+    * @param ellHeight
+    * @return
+    '''
+    def WGS84toLV03(self, latitude, longitude, ellHeight):
+        # , ref double east, ref double north, ref double height
+        d = [0,0,0]
+        d[0] = self.WGStoCHy(latitude, longitude)
+        d[1] = self.WGStoCHx(latitude, longitude)
+        d[2] = self.WGStoCHh(latitude, longitude, ellHeight)
+        return d
 
 class GPRMC(object):
     ''' Data object to temporary store the nmea string. 
@@ -108,6 +274,24 @@ class GPRMC(object):
         return gprmc
 
 if __name__ == "__main__":
+    
+    # Test koordinaten UNI Bern in WGS84 
+    # Sexagesimal: Länge 7° 26' 22.50" / Breite 46° 57' 08.66"
+    # Decimal: Länge 7.438808 / Breite 46.951286
+    uniblat  = 46.951286
+    uniblng  =  7.438808
+    testlat  = 47.010422
+    testlng  = 7.360393
+    
+    lv03 = [0,0,0]
+    
+    converter = GPSConverter()
+    
+    lv03 = converter.WGS84toLV03(testlat, testlng, 0)
+    
+    print lv03
+    
+    '''
     try:
 	Testfile="/home/aaron/GPS_ZUGKRAFTMESSUNG/20140910_Guellen/GPS_Guellen.txt"
 	sentences = csv.reader(open(Testfile, 'r'))
@@ -119,10 +303,10 @@ if __name__ == "__main__":
         		for word in line:
         			print word
         		print "_____________________"
-
+            
     except Exception as e:
         print e
     finally:
         print "[DEBUG]: Cleanup done, exiting."
-
+    '''
 
