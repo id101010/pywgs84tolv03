@@ -137,41 +137,30 @@ class GPSConverter(object):
             - (44.54 * pow(lng_aux, 3))
         return y
 
-    '''
-    * Convert LV03 to WGS84 Return a array of double that contain lat, long,
-    * and height
-    * 
-    * @param east
-    * @param north
-    * @param height
-    * @return
-    '''
     def LV03toWGS84(self, east, north, height):
-        d = [0,0,0]
-        d[0] = self.CHtoWGSlat(east, north)
-        d[1] = self.CHtoWGSlng(east, north)
-        d[2] = self.CHtoWGSheight(east, north, height)
+        '''
+        Convert LV03 to WGS84 Return a array of double that contain lat, long,
+        and height
+        '''
+        d = []
+        d.append(self.CHtoWGSlat(east, north))
+        d.append(self.CHtoWGSlng(east, north))
+        d.append(self.CHtoWGSheight(east, north, height))
         return d
         
-    '''
-    * Convert WGS84 to LV03 Return an array of double that contaign east,
-    * north, and height
-    * 
-    * @param latitude
-    * @param longitude
-    * @param ellHeight
-    * @return
-    '''
     def WGS84toLV03(self, latitude, longitude, ellHeight):
-        # , ref double east, ref double north, ref double height
-        d = [0,0,0]
-        d[0] = self.WGStoCHy(latitude, longitude)
-        d[1] = self.WGStoCHx(latitude, longitude)
-        d[2] = self.WGStoCHh(latitude, longitude, ellHeight)
+        '''
+        Convert WGS84 to LV03 Return an array of double that contaign east,
+        north, and height
+        '''
+        d = []
+        d.append(self.WGStoCHy(latitude, longitude))
+        d.append(self.WGStoCHx(latitude, longitude))
+        d.append(self.WGStoCHh(latitude, longitude, ellHeight))
         return d
 
 class GPRMC(object):
-    ''' Data object to temporary store the nmea string. 
+    ''' Data object to store the nmea string. 
 
 	Explenation of the GPRMC NMEA Data string:
 	$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70
@@ -191,18 +180,18 @@ class GPRMC(object):
     '''
     
     # Object Fields
-    TIME    = 0 # Timestamp
-    VAL     = ''# Validity 
-    LAT     = 0 # Current latitude
-    LAT_NS  = ''# Direciton of latitude [N or S]
-    LON     = 0 # Current longitude
-    LON_EW  = ''# Direction of longitude [E or W]
-    SPEED   = 0 # Current speed
-    COURSE  = 0 # Current course
-    DATE    = 0 # Datestamp
-    VAR     = 0 # Variation
-    VAR_EW  = 0 # Direction of the Variation [E or W]
-    CHECK   = 0 # Checksum
+    TIME    = 0  # Timestamp
+    VAL     = '' # Validity 
+    LAT     = 0  # Current latitude
+    LAT_NS  = '' # Direciton of latitude [N or S]
+    LON     = 0  # Current longitude
+    LON_EW  = '' # Direction of longitude [E or W]
+    SPEED   = 0  # Current speed
+    COURSE  = 0  # Current course
+    DATE    = 0  # Datestamp
+    VAR     = 0  # Variation
+    VAR_EW  = '' # Direction of the Variation [E or W]
+    CHECK   = '' # Checksum
 
     # Get/Set functions 
     def setTime(self, time):
@@ -268,44 +257,86 @@ class GPRMC(object):
     # Helper functions
     def parseGPRMC(self, gprmc):
         ''' Parses a gprmc string an sets the objects values accordingly.'''
-
+        for words in gprmc:
+            for j, word in enumerate(words.split(',')):
+                if(j == 1 and word):
+                    self.TIME = int(round(float(word)))
+                if(j == 2):
+                    self.VAL = word
+                if(j == 3 and word):
+                    lat = float(word)
+                    lat = lat/100
+                    self.LAT = lat
+                if(j == 4):
+                    self.LAT_NS = word
+                if(j == 5 and word):
+                    lon = float(word)
+                    lon = lon/100
+                    self.LON = lon
+                if(j == 6):
+                    self.LON_EW = word
+                if(j == 7 and word):
+                    self.SPEED = float(word)
+                if(j == 8 and word):
+                    self.COURSE = float(word)
+                if(j == 9 and word):
+                    self.DATE = int(word)
+                if(j == 10 and word):
+                    self.VAR = float(word)
+                if(j == 11):
+                    self.VAR_EW = word
+                if(j == 12):
+                    self.CHECK = word
+    
     def generateGPRMC(self):
         ''' Generate the objects gprmc sentence. '''
+        gprmc = ''
+        gprmc += "$GPRMC"
+        gprmc += ','
+        gprmc +=  str(self.getTime())
+        gprmc += ','
+        gprmc +=  str(self.getValidity())
+        gprmc += ','
+        gprmc +=  str(self.getLatitude())
+        gprmc += ','
+        gprmc +=  str(self.getDirectionOfLatitude())
+        gprmc += ','
+        gprmc +=  str(self.getLongitude())
+        gprmc += ','
+        gprmc +=  str(self.getDirectionOfLongitude())
+        gprmc += ','
+        gprmc +=  str(self.getSpeed())
+        gprmc += ','
+        gprmc +=  str(self.getCourse())
+        gprmc += ','
+        gprmc +=  str(self.getDate())
+        gprmc += ','
+        gprmc +=  str(self.getVariation())
+        gprmc += ','
+        gprmc +=  str(self.getDirectionOfVariation())
+        gprmc += ','
+        gprmc +=  str(self.getChecksum())
         return gprmc
 
 if __name__ == "__main__":
-    # Test koordinaten UNI Bern in WGS84 
-    # Sexagesimal: Länge 7° 26' 22.50" / Breite 46° 57' 08.66"
-    # Decimal: Länge 7.438808 / Breite 46.951286
-    uniblat  = 46.951286
-    uniblng  =  7.438808
-    testlat  = 47.010422
-    testlng  = 7.360393
-    
-    lv03 = [0,0,0]
     converter = GPSConverter()
-    lv03 = converter.WGS84toLV03(testlat, testlng, 0)
+    data = []
     
-    print lv03
-    
-    testfile="/home/aaron/Downloads/Test.csv"
-    lines = csv.reader(open(testfile, 'r'))
+    # Read file
+    inputfile = "Test.csv"
+    outputfile = "Out.csv"
+    lines = csv.reader(open(inputfile, 'r'))
 
+    # Generate a List of filled GPRMC objects
     for i, line in enumerate(lines):
-        if line:
-            print "[%d ----------------------------------]: " % i
-            for words in line:
-                for j, word in enumerate(words.split(',')):
-                    #print "[%d]: " % j + "%s" % word
-                    if(j == 3):
-                        lat = float(word)
-                        lat = lat/100
-                    if(j == 5):
-                        lon = float(word)
-                        lon = lon/100
-                    if(j == 6):
-                        lv03 = converter.WGS84toLV03(lat, lon, 0)
-                        print "[WGS84]: " + "%fN" % lat + " %fE" % lon
-                        print "[LV03]: " + "%f" % lv03[0] + " %f" % lv03[1]
-
-
+        data.append(GPRMC())
+        data[i].parseGPRMC(line)
+    
+    # Open a new csv file and write [time,lat,lon] to it.    
+    with open(outputfile, 'wb') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        # Iterate over each object in the list
+        for stuff in data:
+            print "[DEBUG]: " + stuff.generateGPRMC()
+            data = converter.WGS84toLV03(stuff.getLatitude(), stuff.getLongitude(), 0)
+            writer.writerow([stuff.getTime(), data[0], data[1]])
