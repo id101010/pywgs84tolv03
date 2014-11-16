@@ -274,7 +274,6 @@ class GPRMC(object):
         return gprmc
 
 if __name__ == "__main__":
-    '''
     # Test koordinaten UNI Bern in WGS84 
     # Sexagesimal: Länge 7° 26' 22.50" / Breite 46° 57' 08.66"
     # Decimal: Länge 7.438808 / Breite 46.951286
@@ -284,36 +283,29 @@ if __name__ == "__main__":
     testlng  = 7.360393
     
     lv03 = [0,0,0]
-    
     converter = GPSConverter()
-    
     lv03 = converter.WGS84toLV03(testlat, testlng, 0)
     
     print lv03
-    '''
-    converter = GPSConverter()
     
-    try:
-	Testfile="/home/aaron/GPS_ZUGKRAFTMESSUNG/20140910_Guellen/GPS_Guellen.txt"
-	sentences = csv.reader(open(Testfile, 'r'))
-	
-	# for each line in the file
-	for j, line in enumerate(sentences):
-		# if the line isn't empty and begins with '$GPRMC' 
-    		if line and line[0].strip() == '$GPRMC':
-        		print "__________________________\n"
-        		print "[Element: %d]" % j
-        		for i, word in enumerate(line):
-        			#print "[%d]" % i + word
-        			if i == 3:
-        			    tmp = float(word)
-        			    tmp = tmp / 100
-        			    print "lat: %f" % tmp
-        			if i == 5:
-        			    tmp = float(word)
-        			    tmp = tmp / 100
-        			    print "lon: %f" % tmp
-    except Exception as e:
-        print e
-    finally:
-        print "[DEBUG]: Cleanup done, exiting."
+    testfile="/home/aaron/Downloads/Test.csv"
+    lines = csv.reader(open(testfile, 'r'))
+
+    for i, line in enumerate(lines):
+        if line:
+            print "[%d ----------------------------------]: " % i
+            for words in line:
+                for j, word in enumerate(words.split(',')):
+                    #print "[%d]: " % j + "%s" % word
+                    if(j == 3):
+                        lat = float(word)
+                        lat = lat/100
+                    if(j == 5):
+                        lon = float(word)
+                        lon = lon/100
+                    if(j == 6):
+                        lv03 = converter.WGS84toLV03(lat, lon, 0)
+                        print "[WGS84]: " + "%fN" % lat + " %fE" % lon
+                        print "[LV03]: " + "%f" % lv03[0] + " %f" % lv03[1]
+
+
