@@ -4,9 +4,10 @@
 # WGS84 <-> LV03 converter based on the scripts at 
 # http://www.swisstopo.admin.ch written for python2.7
 #
-# aaron@duckpond.ch
+# Aaron Schmocker [aaron@duckpond.ch]
 #
 # vim: tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+
 import math
 
 class GPSConverter(object):
@@ -142,14 +143,15 @@ class GPSConverter(object):
         return d
         
 if __name__ == "__main__":
-    ''' Example for the usage of GPSConverter.'''
+    ''' Example usage for the GPSConverter class.'''
 
     converter = GPSConverter()
 
     # Coordinates
-    wgs84 = [46.95126, 7.43868, 542]
+    wgs84 = [46.95108, 7.438637, 0]
     lv03  = []
-
+    
+    # Convert WGS84 to LV03 coordinates
     lv03 = converter.WGS84toLV03(wgs84[0], wgs84[1], wgs84[2])
 
     print "WGS84: "
