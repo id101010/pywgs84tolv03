@@ -1,9 +1,10 @@
 # pywgs84tolv03 converter script
 
-This is a github mirror for the swisstopo python2 script written by me. You can find the script and ports to several other languages at: 
+This is a github mirror for the swisstopo ch1903 converter script written by me. You can find the script and ports to several other languages at: 
 
-http://www.mont-terri.ch/internet/swisstopo/en/home/products/software/products/skripts.html
+https://www.swisstopo.admin.ch/internet/swisstopo/en/home/products/software/products/skripts.html
 
+It seems like the above site is (temporary?) not available anymore. 
 
 
 ## Example use
